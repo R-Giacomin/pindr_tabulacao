@@ -8,20 +8,13 @@ import datetime
 st.set_page_config(page_title="Painel de Indicadores", layout="wide")
 st.title("Tabulação para o Painel de Indicadores")
 
-# Função modificada para receber os indicadores desejados
 @st.cache_data
-def carregar_valores_df(inicio='2019-12-31', fim='2022-12-31', indicadores=None):
+def carregar_valores_df(inicio='2020-12-31', fim='2022-12-31'):
     gis = conectar_portal()
     valores_item = gis.content.search("valoresmeta", item_type="Map Image Layer")[0]
     valores_table = valores_item.tables[0]
-    # Define o filtro básico de data
-    query_where = f"refdate >= DATE '{inicio}' AND refdate <= DATE '{fim}'"
-    # Se houver seleção de indicadores, adiciona o filtro na query
-    if indicadores and len(indicadores) > 0:
-        indicadores_str = ", ".join([f"'{ind}'" for ind in indicadores])
-        query_where += f" AND data_name IN ({indicadores_str})"
     valores_set = valores_table.query(
-        where=query_where,
+        where=f"refdate >= DATE '{inicio}' AND refdate <= DATE '{fim}'",
         out_fields="geoloc_id, data_name, value, refdate"
     )
     return pd.DataFrame([f.attributes for f in valores_set.features])
@@ -34,47 +27,25 @@ def carregar_recortes_df():
     valores_set = recortes_layer.query(where="1=1", out_fields="*")
     return pd.DataFrame([f.attributes for f in valores_set.features])
 
-# Carrega o arquivo Lista_indicadores.csv e extrai a lista de indicadores disponíveis
-indicadores_lista = pd.read_csv("Lista_indicadores.csv", sep=";", encoding="latin1")
-lista_indicadores = indicadores_lista['data_name'].dropna().unique().tolist()
-
-# --- Filtros no Sidebar ---
-st.sidebar.header("Filtros")
-
-# Define o indicador padrão
-indicador_padrao = 'Percentual de escolas com acesso a esgotamento sanitário'
-if indicador_padrao in lista_indicadores:
-    default_indicadores = [indicador_padrao]
-else:
-    default_indicadores = [lista_indicadores[0]] if lista_indicadores else []
-
-# Seletor de indicadores baseado no CSV
-indicador_sel = st.sidebar.multiselect("Selecione os indicadores", lista_indicadores, default=default_indicadores)
-
-# Filtro de datas (intervalo de anos será definido após a junção dos dados)
 with st.spinner("Carregando dados, esse processo pode levar alguns minutos..."):
-    # Passa os indicadores selecionados para a função de carregamento
-    valores_df = carregar_valores_df(indicadores=indicador_sel)
+    valores_df = carregar_valores_df()
     recortes_df = carregar_recortes_df()
-    df = valores_df.merge(recortes_df, left_on='geoloc_id', right_on='codigo_ibge', how='left')
+    df = valores_df.merge(recortes_df, left_on='geoloc_id', right_on='codigo_ibge', how='outer')
     df = df.drop(columns=['geoloc_id', 'OBJECTID_x', 'OBJECTID_y', 'longitude', 'latitude'])
     df = df.rename(columns={'data_name': 'Indicador', 'value': 'Valor', 'refdate': 'Ano'})
     df = df.dropna(subset=['Ano'])
     df['Ano'] = pd.to_datetime(df['Ano']).dt.year.astype(int)
 
-# --- Filtros adicionais (datas) ---
-anos_disponiveis = sorted(df["Ano"].dropna().unique())
-ano_min, ano_max = int(min(anos_disponiveis)), int(max(anos_disponiveis))
-valor_padrao = (2020, 2022) if 2020 in anos_disponiveis and 2022 in anos_disponiveis else (ano_min, ano_max)
+# --- Filtros ---
+st.sidebar.header("Filtros")
 
-periodo = st.sidebar.select_slider(
-    "Selecione o intervalo de anos",
-    options=anos_disponiveis,
-    value=valor_padrao
-)
+# Indicadores
+indicadores = df["Indicador"].dropna().unique()
+indicador_sel = st.sidebar.multiselect("Selecione os indicadores", indicadores, default=indicadores[:1])
 
-# Aplica o filtro de datas ao DataFrame
-df_filtrado = df[df["Ano"].between(periodo[0], periodo[1])]
+df_filtrado = df[
+    (df["Indicador"].isin(indicador_sel))
+]
 
 # --- Exibir PyGWalker ---
 st.subheader("Explore os dados abaixo 👇")
