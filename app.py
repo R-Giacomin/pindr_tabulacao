@@ -31,6 +31,7 @@ with st.spinner("Carregando dados, esse processo pode levar alguns minutos..."):
     valores_df = carregar_valores_df()
     recortes_df = carregar_recortes_df()
     df = valores_df.merge(recortes_df, left_on='geoloc_id', right_on='codigo_ibge', how='outer')
+    df = df.dropna(subset=['codigo_ibge'])
     df = df.drop(columns=['geoloc_id', 'OBJECTID_x', 'OBJECTID_y', 'longitude', 'latitude'])
     df = df.rename(columns={'data_name': 'Indicador', 'value': 'Valor', 'refdate': 'Ano'})
     df = df.dropna(subset=['Ano'])
