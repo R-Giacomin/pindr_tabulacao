@@ -58,12 +58,13 @@ st.title("Tabulação para o Painel de Indicadores")
 # Código para carregar dados via API ArcGIS
 
 @st.cache_data
-def carregar_valores_df(inicio='2020-12-31', fim='2022-12-31'):
+# Limitado a Região Norte e anos de 2021 a 2022
+def carregar_valores_df(inicio='2021-12-31', fim='2022-12-31'):
     gis = conectar_portal()
     valores_item = gis.content.search("valoresmeta", item_type="Map Image Layer")[0]
     valores_table = valores_item.tables[0]
     valores_set = valores_table.query(
-        where=f"refdate >= DATE '{inicio}' AND refdate <= DATE '{fim}'",
+        where=f"refdate >= DATE '{inicio}' AND refdate <= DATE '{fim}' AND geoloc_id < 1200000",
         out_fields="geoloc_id, data_name, value, refdate"
     )
     return pd.DataFrame([f.attributes for f in valores_set.features])
@@ -79,7 +80,7 @@ def carregar_recortes_df():
 with st.spinner("Carregando dados, esse processo pode levar alguns minutos..."):
     valores_df = carregar_valores_df()
     recortes_df = carregar_recortes_df()
-    df = valores_df.merge(recortes_df, left_on='geoloc_id', right_on='codigo_ibge', how='outer')
+    df = valores_df.merge(recortes_df, left_on='geoloc_id', right_on='codigo_ibge', how='left')
     df = df.dropna(subset=['codigo_ibge'])
     df = df.drop(columns=['geoloc_id', 'OBJECTID_x', 'OBJECTID_y', 'longitude', 'latitude'])
     df = df.rename(columns={'data_name': 'Indicador', 'value': 'Valor', 'refdate': 'Ano'})
