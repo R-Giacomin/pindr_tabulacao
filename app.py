@@ -11,19 +11,24 @@ import duckdb
 st.set_page_config(page_title="Painel de Indicadores", layout="wide")
 st.title("Tabulação para o Painel de Indicadores")
 
+##################
+
+# Código alternativo para carregar dados sem API ArcGIS
 @st.cache_data
-def carregar_dados():
-    # Download the duckdb file
+def baixar_arquivo():
     url = "https://raw.githubusercontent.com/R-Giacomin/Painel_PNDR/main/data/dados_reduzido.db"
     file_path = "dados_reduzido.db"
-
     if not os.path.exists(file_path):
         response = requests.get(url, stream=True)
-        response.raise_for_status()  # Raise an exception for bad status codes
-
-        with open(file_path, 'wb') as file:
+        response.raise_for_status()
+        with open(file_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
-                file.write(chunk)
+                f.write(chunk)
+    return file_path
+
+@st.cache_data
+def carregar_dados():
+    file_path = baixar_arquivo()
 
     # Connect to the database
     con = duckdb.connect(database=file_path, read_only=True)
@@ -47,6 +52,10 @@ def carregar_dados():
 
 with st.spinner("Carregando dados, esse processo pode levar alguns minutos..."):
     df = carregar_dados()
+
+###############
+
+# Cógigo para carregar dados via API ArcGIS
 
 #@st.cache_data
 #def carregar_valores_df(inicio='2020-12-31', fim='2022-12-31'):
@@ -77,6 +86,8 @@ with st.spinner("Carregando dados, esse processo pode levar alguns minutos..."):
 #    df = df.dropna(subset=['Ano'])
 #    df['Ano'] = pd.to_datetime(df['Ano']).dt.year.astype(int)
 
+#################
+
 # --- Filtros ---
 st.sidebar.header("Filtros")
 
@@ -84,12 +95,19 @@ st.sidebar.header("Filtros")
 indicadores = df["Indicador"].dropna().unique()
 indicador_sel = st.sidebar.multiselect("Selecione os indicadores", indicadores, default=indicadores[:1])
 
-df_filtrado = df[
-    (df["Indicador"].isin(indicador_sel))
-]
+# Botão para aplicar filtro
+aplicar_filtro = st.sidebar.button("Aplicar filtro")
+
+# Filtragem condicional com base no botão
+if aplicar_filtro:
+    df_filtrado = df[df["Indicador"].isin(indicador_sel)]
+    st.success("Filtro aplicado!")
+else:
+    df_filtrado = df.copy()
 
 # --- Exibir PyGWalker ---
 st.subheader("Explore os dados abaixo 👇")
+st.markdown("**Antes de criar um gráfico, insira antes no filtro o recorte geográfico, um número muito elevado de municípios pode causar sobrecarga e gerar erro no aplicativo**")
 
 pyg_app = StreamlitRenderer(df_filtrado)
 pyg_app.explorer()
