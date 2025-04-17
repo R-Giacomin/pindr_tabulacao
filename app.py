@@ -58,7 +58,7 @@ st.title("Tabulação para o Painel de Indicadores")
 
 @st.cache_data
 # Limitado a Região Norte e anos de 2021 a 2022
-def carregar_valores_df(inicio='2022-01-01', fim='2022-12-31'):
+def carregar_valores_df(inicio='2021-01-01', fim='2022-12-31'):
     gis = conectar_portal()
     valores_item = gis.content.search("valoresmeta", item_type="Map Image Layer")[0]
     valores_table = valores_item.tables[0]
@@ -90,9 +90,9 @@ with st.spinner("Carregando dados, esse processo pode levar alguns minutos..."):
 
 st.sidebar.header("Filtros")
 
-# Indicador (multiselect)
+# Indicador (selectbox)
 indicadores = df["Indicador"].dropna().unique()
-indicador_sel = st.sidebar.multiselect("Selecione os indicadores", indicadores, default=indicadores[:1])
+indicador_sel = st.sidebar.selectbox("Selecione os indicadores", indicadores, index=0)
 
 # Estado (selectbox)
 estados = df["estado"].dropna().unique()
@@ -102,28 +102,16 @@ estado_sel = st.sidebar.selectbox("Selecione o estado", sorted(estados), index=0
 anos = df["Ano"].dropna().unique()
 ano_sel = st.sidebar.selectbox("Selecione o ano", sorted(anos, reverse=True), index=0)
 
-# Botão para aplicar filtro
-aplicar_filtro = st.sidebar.button("Aplicar filtro")
-
 # --- Aplicar filtros ---
-if aplicar_filtro:
-    df_filtrado = df[
-        (df["Indicador"].isin(indicador_sel)) &
-        (df["estado"] == estado_sel) &
-        (df["Ano"] == ano_sel)
-    ]
-    st.success("Filtro aplicado!")
-else:
-    # Aplica os filtros com os valores selecionados no sidebar mesmo sem clicar no botão
-    df_filtrado = df[
-        (df["Indicador"].isin(indicador_sel)) &
-        (df["estado"] == estado_sel) &
-        (df["Ano"] == ano_sel)
-    ]
+df_filtrado = df[
+    (df["Indicador"] == indicador_sel) &
+    (df["estado"] == estado_sel) &
+    (df["Ano"] == ano_sel)
+]
 
 # --- Exibir PyGWalker ---
 st.markdown("**Antes de criar um gráfico, defina no filtro o indicador, o estado e o ano.**")
-st.markdown("Foram carregados dados apenas a Região Norte e ano de 2022 devido a limitação de processamento da versão gratuita do Streamlit Cloud")
+st.markdown("Foram carregados dados apenas a Região Norte e para os anos de 2021 e 2022 devido a limitação de processamento da versão gratuita do Streamlit Cloud")
 st.subheader("Explore os dados abaixo 👇")
 
 pyg_app = StreamlitRenderer(df_filtrado)
