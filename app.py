@@ -59,12 +59,12 @@ st.title("Tabulação para o Painel de Indicadores")
 
 @st.cache_data
 # Limitado a Região Norte e anos de 2021 a 2022
-def carregar_valores_df(inicio='2021-12-31', fim='2022-12-31'):
+def carregar_valores_df(inicio='2022-01-01', fim='2022-12-31'):
     gis = conectar_portal()
     valores_item = gis.content.search("valoresmeta", item_type="Map Image Layer")[0]
     valores_table = valores_item.tables[0]
     valores_set = valores_table.query(
-        where=f"refdate >= DATE '{inicio}' AND refdate <= DATE '{fim}' AND geoloc_id < 1200000",
+        where=f"refdate >= DATE '{inicio}' AND refdate <= DATE '{fim}' AND geoloc_id < 2000000",
         out_fields="geoloc_id, data_name, value, refdate"
     )
     return pd.DataFrame([f.attributes for f in valores_set.features])
@@ -87,28 +87,44 @@ with st.spinner("Carregando dados, esse processo pode levar alguns minutos..."):
     df = df.dropna(subset=['Ano'])
     df['Ano'] = pd.to_datetime(df['Ano']).dt.year.astype(int)
 
-#################
+# ---------- Filtros no sidebar ----------
 
-# --- Filtros ---
 st.sidebar.header("Filtros")
 
-# Indicadores
+# Indicador (multiselect)
 indicadores = df["Indicador"].dropna().unique()
 indicador_sel = st.sidebar.multiselect("Selecione os indicadores", indicadores, default=indicadores[:1])
+
+# Estado (selectbox)
+estados = df["estado"].dropna().unique()
+estado_sel = st.sidebar.selectbox("Selecione o estado", sorted(estados), index=0)
+
+# Ano (selectbox)
+anos = df["Ano"].dropna().unique()
+ano_sel = st.sidebar.selectbox("Selecione o ano", sorted(anos, reverse=True), index=0)
 
 # Botão para aplicar filtro
 aplicar_filtro = st.sidebar.button("Aplicar filtro")
 
-# Filtragem condicional com base no botão
+# --- Aplicar filtros ---
 if aplicar_filtro:
-    df_filtrado = df[df["Indicador"].isin(indicador_sel)]
+    df_filtrado = df[
+        (df["Indicador"].isin(indicador_sel)) &
+        (df["estado"] == estado_sel) &
+        (df["Ano"] == ano_sel)
+    ]
     st.success("Filtro aplicado!")
 else:
-    df_filtrado = df.copy()
+    # Aplica os filtros com os valores selecionados no sidebar mesmo sem clicar no botão
+    df_filtrado = df[
+        (df["Indicador"].isin(indicador_sel)) &
+        (df["estado"] == estado_sel) &
+        (df["Ano"] == ano_sel)
+    ]
 
 # --- Exibir PyGWalker ---
-st.markdown("**Antes de criar um gráfico, insira no filtro o recorte geográfico e o ano. Um número muito elevado de municípios pode causar sobrecarga e gerar erro no aplicativo**")
-st.markdown("Foram carregados dados apenas a Região Norte e anos de 2021 a 2022 devido a limitação de processamento da versão gratuita do Streamlit Cloud")
+st.markdown("**Antes de criar um gráfico, defina no filtro o indicador, o estado e o ano.**")
+st.markdown("Foram carregados dados apenas a Região Norte e ano de 2022 devido a limitação de processamento da versão gratuita do Streamlit Cloud")
 st.subheader("Explore os dados abaixo 👇")
 
 pyg_app = StreamlitRenderer(df_filtrado)
