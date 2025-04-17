@@ -107,8 +107,9 @@ else:
     df_filtrado = df.copy()
 
 # --- Exibir PyGWalker ---
+st.markdown("**Antes de criar um gráfico, insira no filtro o recorte geográfico e o ano. Um número muito elevado de municípios pode causar sobrecarga e gerar erro no aplicativo**")
+st.markdown("Foram carregados dados apenas a Região Norte e anos de 2021 a 2022 devido a limitação de processamento da versão gratuita do Streamlit Cloud")
 st.subheader("Explore os dados abaixo 👇")
-st.markdown("**Antes de criar um gráfico, insira antes no filtro o recorte geográfico, um número muito elevado de municípios pode causar sobrecarga e gerar erro no aplicativo**")
 
 pyg_app = StreamlitRenderer(df_filtrado)
 pyg_app.explorer()
