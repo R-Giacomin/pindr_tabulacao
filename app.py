@@ -3,10 +3,9 @@ from config import conectar_portal
 import pandas as pd
 import pygwalker as pyg
 from pygwalker.api.streamlit import StreamlitRenderer
-import datetime
-import requests
-import os
-import duckdb
+#import requests
+#import os
+#import duckdb
 
 st.set_page_config(page_title="Painel de Indicadores", layout="wide")
 st.title("Tabulação para o Painel de Indicadores")
@@ -127,7 +126,5 @@ st.markdown("**Antes de criar um gráfico, defina no filtro o indicador, o estad
 st.markdown("Foram carregados dados apenas a Região Norte e ano de 2022 devido a limitação de processamento da versão gratuita do Streamlit Cloud")
 st.subheader("Explore os dados abaixo 👇")
 
-#pyg_app = StreamlitRenderer(df_filtrado)
-#pyg_app.explorer()
-
-walker = pyg.walk(df_filtrado)
+pyg_app = StreamlitRenderer(df_filtrado)
+pyg_app.explorer()
