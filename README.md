@@ -1,6 +1,6 @@
 # Painel de Indicadores da Política Nacional de Desenvolvimento Regional (PNDR)
 
-Este repositório contém o código-fonte do aplicativo **Consulta ao Painel de Indicadores da PNDR**, desenvolvido como parte do **Sistema Nacional de Informações do Desenvolvimento Regional (SNIDR)**. O painel tem como objetivo facilitar o acesso, análise e visualização de indicadores regionais relevantes para a implementação e monitoramento da **Política Nacional de Desenvolvimento Regional**, conforme estabelecido pelo [Decreto nº 11.962, de 22 de março de 2024](https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/decreto/d11962.htm).
+Este repositório contém o código-fonte do aplicativo **[Consulta ao Painel de Indicadores da PNDR](https://pindrtabulacao.streamlit.app/)**, desenvolvido como parte do **Sistema Nacional de Informações do Desenvolvimento Regional (SNIDR)**. O painel tem como objetivo facilitar o acesso, análise e visualização de indicadores regionais relevantes para a implementação e monitoramento da **Política Nacional de Desenvolvimento Regional**, conforme estabelecido pelo [Decreto nº 11.962, de 22 de março de 2024](https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/decreto/d11962.htm).
 
 ## 🔍 Objetivo
 
